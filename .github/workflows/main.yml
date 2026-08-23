@@ -1,0 +1,43 @@
+name: Build Ravn
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract Ravn
+        run: |
+          mkdir ravn
+          unzip Ravn.zip -d ravn
+
+      - name: Find project
+        run: |
+          find ravn -name gradlew -type f
+
+      - name: Setup Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Make Gradle executable
+        run: |
+          chmod +x $(find ravn -name gradlew -type f | head -1)
+
+      - name: Build
+        run: |
+          PROJECT=$(dirname "$(find ravn -name gradlew -type f | head -1)")
+          cd "$PROJECT"
+          ./gradlew setupCiWorkspace clean build
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ravn-build
+          path: ravn/**/build/libs/*.jar
